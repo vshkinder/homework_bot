@@ -15,7 +15,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
+handler = RotatingFileHandler(
+    'my_logger.log',
+    maxBytes=50000000,
+    backupCount=5
+)
 logger.addHandler(handler)
 
 load_dotenv()
@@ -75,12 +79,13 @@ def check_response(response):
         message = 'В ответе API отсутствует домашняя работа'
         raise IndexError(message)
     elif type(response['homeworks']) is not list:
-        raise NegativeValueException('работы приходят не списком')
+        raise ValueError('работы приходят не списком')
     homework = response['homeworks']
     return homework
 
 
 def parse_status(homework):
+    """Извлекает из информации о конкретной домашней работе."""
     homework_name = homework['homework_name']
     homework_status = homework['status']
     verdict = HOMEWORK_STATUSES[homework_status]
@@ -88,6 +93,7 @@ def parse_status(homework):
 
 
 def check_tokens():
+    """Проверяет доступность переменных окружения."""
     list_tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     for token in list_tokens:
         if not token:
