@@ -110,7 +110,7 @@ def parse_status(homework):
 def check_tokens():
     """Проверяет доступность переменных окружения."""
     list_tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
-    if all(list_tokens) == False:
+    if all(list_tokens) is False:
         message = 'Ошибка токена. Программа завершена'
         logging.critical(message)
         return False
