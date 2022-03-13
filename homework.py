@@ -49,7 +49,7 @@ def send_message(bot, message):
             text=message,
         )
         logger.info(LOG_MESSAGE.format(message))
-    except Exception as error:
+    except Exception:
         logger.error(LOG_MESSAGE_ERROR)
 
 
