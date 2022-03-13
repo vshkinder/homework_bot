@@ -9,12 +9,6 @@ from dotenv import load_dotenv
 from http import HTTPStatus
 from logging.handlers import RotatingFileHandler
 
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename='main.log',
-    format='%(asctime)s, %(funcName)s, %(levelname)s, %(message)s'
-)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = RotatingFileHandler(
@@ -48,12 +42,15 @@ LOG_MESSAGE_ERROR = 'Ошибка при отправке сообщения'
 def send_message(bot, message):
     """Функция отправки сообщения."""
     chat_id = TELEGRAM_CHAT_ID
-    bot.send_message(
-        chat_id=chat_id,
-        text=message,
-    )
-    logger.info(LOG_MESSAGE.format(message))
-    logger.error(LOG_MESSAGE_ERROR)
+    logger.info('Попытка отправки сообщения')
+    try:
+        bot.send_message(
+            chat_id=chat_id,
+            text=message,
+        )
+        logger.info(LOG_MESSAGE.format(message))
+    except Exception as error:
+        logger.error(LOG_MESSAGE_ERROR)
 
 
 def get_api_answer(current_timestamp):
@@ -63,13 +60,12 @@ def get_api_answer(current_timestamp):
     try:
         response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
     except ValueError:
-        logger.error('Ошибка запроса с параметрами "{}".'.format(params))
+        logger.debug(f'Ошибка при запросе {response}')
         raise ValueError('Ошибка при формировании json(response)')
     except Exception as error:
         raise Exception(f'API ошибка запроса: {error}')
     if response.status_code != HTTPStatus.OK:
         status_code = response.status_code
-        logger.error(f'Ошибка {status_code}')
         raise Exception(f'Ошибка {status_code}')
     response = response.json()
     return response
@@ -80,13 +76,10 @@ def check_response(response):
     if not isinstance(response, dict):
         message = 'Ответ API не словарь'
         raise TypeError(message)
-    elif ('homeworks' or 'current_date') not in response:
+    if ('homeworks' or 'current_date') not in response:
         message = 'В ответе отсутствуют необходимые ключи'
         raise IndexError(message)
-    elif ['homeworks'][0] not in response:
-        message = 'В ответе API отсутствует домашняя работа'
-        raise IndexError(message)
-    elif type(response['homeworks']) is not list:
+    if not isinstance(response['homeworks'], list):
         raise ValueError('работы приходят не списком')
     homework = response['homeworks']
     return homework
@@ -95,9 +88,6 @@ def check_response(response):
 def parse_status(homework):
     """Извлекает из информации о конкретной домашней работе."""
     homework_name = homework['homework_name']
-    # в pytest словарь передается без homework_name
-    # при добавлении проверки на наличие ключа
-    # тесты не проходят
     homework_status = homework['status']
     if homework_status not in HOMEWORK_VERDICTS:
         message = 'Неопределенный статус: "{}"'
@@ -143,4 +133,9 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename='main.log',
+        format='%(asctime)s, %(funcName)s, %(levelname)s, %(message)s'
+    )
     main()
